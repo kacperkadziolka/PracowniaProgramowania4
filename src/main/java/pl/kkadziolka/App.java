@@ -3,9 +3,9 @@ package pl.kkadziolka;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import pl.kkadziolka.productcatalog.MapProductStorage;
 import pl.kkadziolka.productcatalog.ProductCatalog;
-import pl.kkadziolka.productcatalog.SqlProductStorage;
-
+import pl.kkadziolka.productcatalog.ProductStorage;
 
 import java.math.BigDecimal;
 
@@ -17,10 +17,15 @@ public class App {
     }
 
     @Bean
-    ProductCatalog createMyProductCatalog() {
-        ProductCatalog productCatalog = new ProductCatalog(new SqlProductStorage());
+    ProductStorage createMyProductStorage() {
+        return new MapProductStorage();
+    }
 
-        fillWithExampleProducts(productCatalog);s
+    @Bean
+    ProductCatalog createMyProductCatalog(ProductStorage productStorage) {
+        ProductCatalog productCatalog = new ProductCatalog(productStorage);
+
+        fillWithExampleProducts(productCatalog);
 
         return productCatalog;
     }
