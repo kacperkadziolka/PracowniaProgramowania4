@@ -1,4 +1,4 @@
-package pl.kkadziolka.crm;
+package pl.kkadziolka.productcatalog.crm;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;

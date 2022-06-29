@@ -1,4 +1,4 @@
-package pl.kkadziolka.crm;
+package pl.kkadziolka.productcatalog.crm;
 
 import org.springframework.web.bind.annotation.*;
 
