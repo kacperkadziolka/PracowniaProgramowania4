@@ -1,10 +1,30 @@
 package pl.kkadziolka.sales;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import pl.kkadziolka.sales.cart.CartStorage;
+import pl.kkadziolka.sales.offerting.Offer;
+import pl.kkadziolka.sales.offerting.OfferCalculator;
+import pl.kkadziolka.sales.payment.DummyPaymentGateway;
+import pl.kkadziolka.sales.product.ListProductDetailsProvider;
+import pl.kkadziolka.sales.product.ProductDetails;
+import pl.kkadziolka.sales.product.ProductNotAvailableException;
+import pl.kkadziolka.sales.reservation.InMemoryReservationStorage;
+
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class CollectingProductsTest {
+
+    List<ProductDetails> availableProducts;
+
+    @BeforeEach
+    void setup() {
+        this.availableProducts = new ArrayList<>();
+    }
 
     @Test
     void showsEmptyOffer() {
@@ -14,32 +34,69 @@ public class CollectingProductsTest {
         Offer offer = sales.getCurrentOffer(clientId);
 
         assertEquals(BigDecimal.ZERO, offer.getTotal());
+        assertEquals(0, offer.getItemsCount());
     }
+
+    @Test
+    void itDenyAddingMissingProductToCart() {
+        String clientId = thereIsClient();
+        Sales sales = thereIsSalesModule();
+
+        assertThrows(ProductNotAvailableException.class, () -> {
+            sales.addToCart(clientId, "MISSING_PRODUCT_ID");
+        });
+    }
+
+
     @Test
     void itAllowToAddProduct() {
         String productId = thereIsProduct("lego", BigDecimal.valueOf(10.10));
         String clientId = thereIsClient();
         Sales sales = thereIsSalesModule();
-        sales.addToCart(clientId, productId);
 
+        sales.addToCart(clientId, productId);
         Offer offer = sales.getCurrentOffer(clientId);
 
         assertEquals(BigDecimal.valueOf(10.10), offer.getTotal());
-    }
-
-    private String thereIsClient() {
-        return null;
-    }
-
-    private String thereIsProduct(String lego, BigDecimal valueOf) {
-        return null;
-    }
-
-    private Sales thereIsSalesModule() {
-        return new Sales();
+        assertEquals(1, offer.getItemsCount());
     }
 
     @Test
+    void itAllowToAddMultipleProducts() {
+        String productId1 = thereIsProduct("lego-1", BigDecimal.valueOf(10.10));
+        String productId2 = thereIsProduct("lego-2", BigDecimal.valueOf(20.20));
+        String clientId = thereIsClient();
+        Sales sales = thereIsSalesModule();
+
+        sales.addToCart(clientId, productId1);
+        sales.addToCart(clientId, productId2);
+        Offer offer = sales.getCurrentOffer(clientId);
+
+        assertEquals(BigDecimal.valueOf(30.30), offer.getTotal());
+        assertEquals(2, offer.getItemsCount());
+    }
+
+    private String thereIsClient() {
+        return "kuba";
+    }
+
+    private String thereIsProduct(String productId, BigDecimal price) {
+        ProductDetails productDetails = new ProductDetails(productId, "Some name", price);
+        availableProducts.add(productDetails);
+
+        return productId;
+    }
+
+    private Sales thereIsSalesModule() {
+        return new Sales(
+                new CartStorage(),
+                new ListProductDetailsProvider(availableProducts),
+                new DummyPaymentGateway(),
+                new InMemoryReservationStorage(),
+                new OfferCalculator()
+        );
+    }
+
     void every5thProductIsFree() {
         String productId = thereIsProduct("lego", BigDecimal.valueOf(10));
         String clientId = thereIsClient();

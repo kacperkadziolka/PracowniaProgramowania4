@@ -1,4 +1,4 @@
-package pl.kkadziolka.productcatalog.crm;
+package pl.kkadziolka.crm;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
